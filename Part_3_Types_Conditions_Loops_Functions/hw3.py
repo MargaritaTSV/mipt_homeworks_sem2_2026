@@ -30,6 +30,7 @@ def extract_date(maybe_dt: str) -> tuple[int, int, int] | None:
 def income_handler(amount: float, income_date: str) -> str:
     return f"{OP_SUCCESS_MSG} {amount=} {income_date=}"
 
+
 def main() -> None:
     """Ваш код здесь"""
 
