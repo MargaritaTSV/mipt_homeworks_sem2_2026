@@ -398,6 +398,10 @@ def get_year_month_day(date_value: tuple[int, int, int]) -> tuple[int, int, int]
     return year, month, day
 
 
+def get_year_month(date_value: tuple[int, int, int]) -> tuple[int, int]:
+    return date_value[YEAR_INDEX], date_value[MONTH_INDEX]
+
+
 def is_not_after(
     first_date: tuple[int, int, int],
     second_date: tuple[int, int, int],
@@ -409,7 +413,7 @@ def is_same_month(
     first_date: tuple[int, int, int],
     second_date: tuple[int, int, int],
 ) -> bool:
-    return first_date[MONTH_INDEX] == second_date[MONTH_INDEX] and first_date[YEAR_INDEX] == second_date[YEAR_INDEX]
+    return get_year_month(first_date) == get_year_month(second_date)
 
 
 def check_income_command(parts: list[str]) -> str:
