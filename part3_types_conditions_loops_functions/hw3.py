@@ -459,7 +459,7 @@ def check_stats_command(parts: list[str]) -> str:
     return stats_handler(parts[1])
 
 
-def get_result(parts: list[str]) -> str:
+def get_command_result(parts: list[str]) -> str:
     if not parts:
         return UNKNOWN_COMMAND_MSG
 
@@ -475,7 +475,7 @@ def get_result(parts: list[str]) -> str:
 
 def main() -> None:
     for command in iter(input, ""):
-        print(get_result(command.split()))
+        print(get_command_result(command.split()))
 
 
 if __name__ == "__main__":
