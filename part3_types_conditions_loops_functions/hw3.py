@@ -5,9 +5,7 @@ UNKNOWN_COMMAND_MSG = "Unknown command!"
 NONPOSITIVE_VALUE_MSG = "Value must be grater than zero!"
 INCORRECT_DATE_MSG = "Invalid date!"
 NOT_EXISTS_CATEGORY = "Category not exists!"
-SUCCESS_MSG = "Added"
-OP_SUCCESS_MSG = SUCCESS_MSG
-
+OP_SUCCESS_MSG = "Added"
 
 EXPENSE_CATEGORIES = {
     "Food": ("Supermarket", "Restaurants", "FastFood", "Coffee", "Delivery"),
@@ -45,21 +43,12 @@ SEPARATOR = "::"
 NEW_LINE = "\n"
 ZERO_FLOAT = float(0)
 
-
-def is_divisible(number: int, divisor: int) -> bool:
-    return number % divisor == 0
-
-
-def is_century_year(year: int) -> bool:
-    return is_divisible(year, 100)
-
-
 def is_leap_year(year: int) -> bool:
-    if is_divisible(year, 400):
+    if year % 400 == 0:
         return True
-    if is_century_year(year):
+    if year % 100 == 0:
         return False
-    return is_divisible(year, 4)
+    return year % 4 == 0
 
 
 def split_date_parts(maybe_dt: str) -> list[str] | None:
@@ -69,13 +58,13 @@ def split_date_parts(maybe_dt: str) -> list[str] | None:
     return array_with_date
 
 
-def parse_date_numbers(parts: list[str]) -> tuple[int, int, int] | None:
-    if not all(part.isdigit() for part in parts):
+def parse_date_numbers(date_list: list[str]) -> tuple[int, int, int] | None:
+    if not all(date.isdigit() for date in date_list):
         return None
 
-    day = int(parts[DAY_INDEX])
-    month = int(parts[MONTH_INDEX])
-    year = int(parts[YEAR_INDEX])
+    day = int(date_list[DAY_INDEX])
+    month = int(date_list[MONTH_INDEX])
+    year = int(date_list[YEAR_INDEX])
     return day, month, year
 
 
@@ -207,7 +196,7 @@ def income_handler(amount: float, date: str) -> str:
     financial_transactions_storage.append(
         income_transaction(amount, parsed_date),
     )
-    return SUCCESS_MSG
+    return OP_SUCCESS_MSG
 
 
 def cost_handler(category_name: str, amount: float, cost_date: str) -> str:
@@ -227,7 +216,7 @@ def cost_handler(category_name: str, amount: float, cost_date: str) -> str:
     financial_transactions_storage.append(
         cost_transaction(category_name, amount, parsed_date),
     )
-    return SUCCESS_MSG
+    return OP_SUCCESS_MSG
 
 
 def update_category_statistics(
@@ -362,10 +351,6 @@ def get_initial_stats() -> tuple[float, float, float, dict[str, float]]:
     return ZERO_FLOAT, ZERO_FLOAT, ZERO_FLOAT, {}
 
 
-def get_report_date(report_date: str) -> tuple[int, int, int] | None:
-    return parse_date(report_date)
-
-
 def collect_stats(
     report_date_tuple: tuple[int, int, int],
 ) -> tuple[float, float, float, dict[str, float]]:
@@ -385,7 +370,7 @@ def collect_stats(
 
 
 def stats_handler(report_date: str) -> str:
-    report_date_tuple = get_report_date(report_date)
+    report_date_tuple = parse_date(report_date)
     if report_date_tuple is None:
         return INCORRECT_DATE_MSG
 
