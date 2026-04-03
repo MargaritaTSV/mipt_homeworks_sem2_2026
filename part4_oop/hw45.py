@@ -93,9 +93,7 @@ class LFUPolicy(Policy[K]):
 
     def get_key_to_evict(self) -> K | None:
         if len(self._key_counter) > self.capacity:
-            keys_to_compare = [
-                cache_key for cache_key in self._key_counter if cache_key != self._last_registered_key
-            ]
+            keys_to_compare = [cache_key for cache_key in self._key_counter if cache_key != self._last_registered_key]
             if not keys_to_compare:
                 return None
             return min(keys_to_compare, key=lambda cache_key: self._key_counter[cache_key])
@@ -159,8 +157,7 @@ class CachedProperty[V]:
             return self
 
         if instance.cache.exists(self._name):
-            cached_value = instance.cache.get(self._name)
-            return cached_value  # type: ignore[return-value]
+            return instance.cache.get(self._name)  # type: ignore[return-value]
 
         computed_value = self._func(instance)
         instance.cache.set(self._name, computed_value)
