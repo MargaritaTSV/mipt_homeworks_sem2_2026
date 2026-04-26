@@ -54,13 +54,6 @@ class CircuitBreaker:
         self.time_to_recover = time_to_recover
         self.triggers_on = triggers_on
 
-    def _raise_if_blocked(self, blocked_at: datetime | None, func_name: str) -> None:
-        if blocked_at is None:
-            return
-        expires_at = blocked_at + timedelta(seconds=self.time_to_recover)
-        if datetime.now(UTC) < expires_at:
-            raise BreakerError(func_name, blocked_at)
-
     def __call__(self, func: CallableWithMeta[P, R_co]) -> CallableWithMeta[P, R_co]:
         fail_count: int = 0
         blocked_at: datetime | None = None
@@ -86,13 +79,20 @@ class CircuitBreaker:
 
         return wrapper
 
+    def _raise_if_blocked(self, blocked_at: datetime | None, func_name: str) -> None:
+        if blocked_at is None:
+            return
+        expires_at = blocked_at + timedelta(seconds=self.time_to_recover)
+        if datetime.now(UTC) < expires_at:
+            raise BreakerError(func_name, blocked_at)
+
 
 circuit_breaker = CircuitBreaker(5, 30, Exception)
 
 
 def get_comments(post_id: int) -> Any:
-    with urlopen(f"https://jsonplaceholder.typicode.com/comments?postId={post_id}") as response:
-        return json.loads(response.read())
+    response = urlopen(f"https://jsonplaceholder.typicode.com/comments?postId={post_id}")
+    return json.loads(response.read())
 
 
 if __name__ == "__main__":
