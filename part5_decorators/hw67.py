@@ -46,9 +46,7 @@ class CircuitBreaker:
         return f"{func.__module__}.{func.__name__}"
 
     @staticmethod
-    def _validate_args(
-        critical_count: int, time_to_recover: int, triggers_on: type[Exception]
-    ) -> None:
+    def _validate_args(critical_count: int, time_to_recover: int, triggers_on: type[Exception]) -> None:
         errors: list[Exception] = []
         if not isinstance(critical_count, int) or critical_count <= 0:
             errors.append(ValueError(INVALID_CRITICAL_COUNT))
