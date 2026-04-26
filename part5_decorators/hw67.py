@@ -34,7 +34,9 @@ def _get_name[**P, R_co](func: CallableWithMeta[P, R_co]) -> str:
 
 
 def _validate_args(
-    critical_count: int, time_to_recover: int, triggers_on: type[Exception],
+    critical_count: int,
+    time_to_recover: int,
+    triggers_on: type[Exception],
 ) -> None:
     errors: list[Exception] = []
     if not isinstance(critical_count, int) or critical_count <= 0:
