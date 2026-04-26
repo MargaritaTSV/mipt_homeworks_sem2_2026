@@ -29,6 +29,24 @@ class BreakerError(Exception):
         self.block_time = block_time
 
 
+def _get_name[**P, R_co](func: CallableWithMeta[P, R_co]) -> str:
+    return f"{func.__module__}.{func.__name__}"
+
+
+def _validate_args(
+    critical_count: int, time_to_recover: int, triggers_on: type[Exception],
+) -> None:
+    errors: list[Exception] = []
+    if not isinstance(critical_count, int) or critical_count <= 0:
+        errors.append(ValueError(INVALID_CRITICAL_COUNT))
+    if not isinstance(time_to_recover, int) or time_to_recover <= 0:
+        errors.append(ValueError(INVALID_RECOVERY_TIME))
+    if not isinstance(triggers_on, type) or not issubclass(triggers_on, Exception):
+        errors.append(TypeError(INVALID_TRIGGERS_ON))
+    if errors:
+        raise ExceptionGroup(VALIDATIONS_FAILED, errors)
+
+
 class CircuitBreaker:
     def __init__(
         self,
@@ -36,31 +54,15 @@ class CircuitBreaker:
         time_to_recover: int = 30,
         triggers_on: type[Exception] = Exception,
     ) -> None:
-        self._validate_args(critical_count, time_to_recover, triggers_on)
+        _validate_args(critical_count, time_to_recover, triggers_on)
         self.critical_count = critical_count
         self.time_to_recover = time_to_recover
         self.triggers_on = triggers_on
 
-    @staticmethod
-    def _get_name[**P, R_co](func: CallableWithMeta[P, R_co]) -> str:
-        return f"{func.__module__}.{func.__name__}"
-
-    @staticmethod
-    def _validate_args(critical_count: int, time_to_recover: int, triggers_on: type[Exception]) -> None:
-        errors: list[Exception] = []
-        if not isinstance(critical_count, int) or critical_count <= 0:
-            errors.append(ValueError(INVALID_CRITICAL_COUNT))
-        if not isinstance(time_to_recover, int) or time_to_recover <= 0:
-            errors.append(ValueError(INVALID_RECOVERY_TIME))
-        if not isinstance(triggers_on, type) or not issubclass(triggers_on, Exception):
-            errors.append(TypeError(INVALID_TRIGGERS_ON))
-        if errors:
-            raise ExceptionGroup(VALIDATIONS_FAILED, errors)
-
     def __call__(self, func: CallableWithMeta[P, R_co]) -> CallableWithMeta[P, R_co]:
         fail_count: int = 0
         blocked_at: datetime | None = None
-        func_name = self._get_name(func)
+        func_name = _get_name(func)
 
         @wraps(func)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> R_co:
