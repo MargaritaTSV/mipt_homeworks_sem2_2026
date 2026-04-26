@@ -1,4 +1,6 @@
 import json
+from datetime import UTC, datetime, timedelta
+from functools import wraps
 from typing import Any, ParamSpec, Protocol, TypeVar
 from urllib.request import urlopen
 
@@ -20,37 +22,77 @@ class CallableWithMeta(Protocol[P, R_co]):
 
 
 class BreakerError(Exception):
-    pass
+    def __init__(self, func_name: str, block_time: datetime) -> None:
+        super().__init__(TOO_MUCH)
+        self.func_name = func_name
+        self.block_time = block_time
+
+
+def _get_name[**P, R_co](func: CallableWithMeta[P, R_co]) -> str:
+    return f"{func.__module__}.{func.__name__}"
+
+
+def _validate_args(critical_count: int, time_to_recover: int) -> None:
+    errors: list[Exception] = []
+    if not isinstance(critical_count, int) or critical_count <= 0:
+        errors.append(ValueError(INVALID_CRITICAL_COUNT))
+    if not isinstance(time_to_recover, int) or time_to_recover <= 0:
+        errors.append(ValueError(INVALID_RECOVERY_TIME))
+    if errors:
+        raise ExceptionGroup(VALIDATIONS_FAILED, errors)
 
 
 class CircuitBreaker:
     def __init__(
         self,
-        critical_count: int,
-        time_to_recover: int,
-        triggers_on: type[Exception],
-    ): ...
+        critical_count: int = 5,
+        time_to_recover: int = 30,
+        triggers_on: type[Exception] = Exception,
+    ) -> None:
+        _validate_args(critical_count, time_to_recover)
+        self.critical_count = critical_count
+        self.time_to_recover = time_to_recover
+        self.triggers_on = triggers_on
+
+    def _raise_if_blocked(self, blocked_at: datetime | None, func_name: str) -> None:
+        if blocked_at is None:
+            return
+        expires_at = blocked_at + timedelta(seconds=self.time_to_recover)
+        if datetime.now(UTC) < expires_at:
+            raise BreakerError(func_name, blocked_at)
 
     def __call__(self, func: CallableWithMeta[P, R_co]) -> CallableWithMeta[P, R_co]:
-        raise NotImplementedError
+        fail_count: int = 0
+        blocked_at: datetime | None = None
+        func_name = _get_name(func)
+
+        @wraps(func)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R_co:
+            nonlocal fail_count, blocked_at
+
+            self._raise_if_blocked(blocked_at, func_name)
+            blocked_at = None
+            try:
+                result: R_co = func(*args, **kwargs)
+            except self.triggers_on as err:
+                fail_count += 1
+                if fail_count >= self.critical_count:
+                    blocked_at = datetime.now(UTC)
+                    raise BreakerError(func_name, blocked_at) from err
+                raise
+
+            fail_count = 0
+            return result
+
+        return wrapper
 
 
 circuit_breaker = CircuitBreaker(5, 30, Exception)
 
 
-# @circuit_breaker
 def get_comments(post_id: int) -> Any:
-    """
-    Получает комментарии к посту
-
-    Args:
-        post_id (int): Идентификатор поста
-
-    Returns:
-        list[dict[int | str]]: Список комментариев
-    """
-    response = urlopen(f"https://jsonplaceholder.typicode.com/comments?postId={post_id}")
-    return json.loads(response.read())
+    with urlopen(f"https://jsonplaceholder.typicode.com/comments?postId={post_id}") as response:
+        return json.loads(response.read())
 
 
 if __name__ == "__main__":
