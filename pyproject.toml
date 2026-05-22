@@ -4,7 +4,10 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "openai>=2.38.0",
+    "pyyaml>=6.0.3",
+]
 
 [tool.ruff]
 target-version = "py313"
@@ -39,6 +42,7 @@ lectures = [
 ]
 lint = [
     "mypy>=1.19.1",
+    "types-PyYAML>=6.0.12",
     "pyrefly>=0.49.0",
     "ruff>=0.14.13",
     "ty>=0.0.13",
